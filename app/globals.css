@@ -1,26 +1,125 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Ink on paper; green means QueryIO (the boundary); vermilion means refused */
+  --paper: oklch(0.978 0.004 150);
+  --paper-2: oklch(0.955 0.007 155);
+  --ink: oklch(0.2 0.02 165);
+  --ink-2: oklch(0.44 0.02 165);
+  --ink-3: oklch(0.53 0.015 165);
+  --rule: oklch(0.89 0.01 160);
+
+  --green: oklch(0.38 0.075 162);
+  --green-hover: oklch(0.32 0.07 162);
+  --green-deep: oklch(0.26 0.045 165);
+  --green-tint: oklch(0.945 0.03 160);
+  --on-green: oklch(0.97 0.01 160);
+  --on-green-2: oklch(0.83 0.03 160);
+
+  --refuse: oklch(0.53 0.18 30);
+  --refuse-tint: oklch(0.95 0.03 30);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-green: var(--green);
+  --color-green-hover: var(--green-hover);
+  --color-green-deep: var(--green-deep);
+  --color-green-tint: var(--green-tint);
+  --color-on-green: var(--on-green);
+  --color-on-green-2: var(--on-green-2);
+  --color-refuse: var(--refuse);
+  --color-refuse-tint: var(--refuse-tint);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* next/font variables live on <html>, so the theme can reference them at :root */
+@theme {
+  --font-sans: var(--font-schibsted), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 2rem;
+  background: var(--paper);
+  scrollbar-color: var(--ink-3) var(--paper-2);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: clip;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  caret-color: var(--green);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--green-tint);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+/* The query moves down the path: each stop resolves in order */
+@keyframes stop-in {
+  from {
+    opacity: 0.2;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0.3;
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.stop-in {
+  animation: stop-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 110ms);
+}
+
+.reveal {
+  animation: reveal 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 110ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
