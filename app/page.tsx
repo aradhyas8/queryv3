@@ -5,7 +5,7 @@ import { ClientConfig, CopyButton, InlineCommand, Terminal } from "./interactive
 const NPM = "https://www.npmjs.com/package/queryio";
 const VERSION = "0.1.0";
 const DSN = "postgres://user:password@localhost:5432/my_database";
-const RUN = "npx -y queryio";
+const RUN = "npm i queryio";
 
 /* ---------- primitives ---------- */
 
