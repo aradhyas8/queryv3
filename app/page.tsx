@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
-import { ClientConfig, CopyButton, InlineCommand, Terminal } from "./interactive";
+import { ClientConfig, CopyButton, InlineCommand, Terminal, ViewportVideo } from "./interactive";
 
 const NPM = "https://www.npmjs.com/package/queryio";
 const VERSION = "0.1.0";
@@ -222,18 +222,14 @@ export default function Home() {
         <p className="mb-10 max-w-md text-sm leading-relaxed text-fg-4">
           Start from a real record. See the context around it before the agent decides what to query next.
         </p>
-        <video
+        <ViewportVideo
           src="/queryio-film-web.mp4"
           poster="/queryio-film-poster.png"
-          autoPlay
-          muted
-          loop
           controls
-          playsInline
           className="w-full rounded-xl border border-line bg-cmd shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_24px_64px_-12px_rgb(0_0_0/0.12)]"
         >
           QueryIO demo video.
-        </video>
+        </ViewportVideo>
       </Section>
 
       {/* How it works */}

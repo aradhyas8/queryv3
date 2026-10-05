@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 
 const DSN = "postgres://user:password@localhost:5432/my_database";
@@ -152,4 +152,20 @@ export function ClientConfig() {
       </pre>
     </Terminal>
   );
+}
+
+/** Muted looping video that plays only while at least half of it is on screen. */
+export function ViewportVideo(props: ComponentProps<"video">) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const io = new IntersectionObserver(
+      ([entry]) => (entry.isIntersecting ? video.play().catch(() => {}) : video.pause()),
+      { threshold: 0.5 },
+    );
+    io.observe(video);
+    return () => io.disconnect();
+  }, []);
+  return <video ref={ref} muted loop playsInline preload="auto" {...props} />;
 }
