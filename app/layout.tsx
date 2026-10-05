@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QueryIO — Open-source MCP server for PostgreSQL",
+  title: "QueryIO — Database access for coding agents",
   description:
-    "QueryIO gives coding agents four bounded, read-oriented PostgreSQL tools. Every call runs in a READ ONLY transaction with server-side timeouts, then rolls back.",
+    "Your agent already knows your code. QueryIO lets it see the data behind it, through a read-only path you control. Open source, PostgreSQL, MCP.",
 };
 
 export default function RootLayout({

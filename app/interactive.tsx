@@ -181,7 +181,7 @@ export function SetupConfig() {
         options={Object.entries(SETUP).map(([id, c]) => ({ id: id as keyof typeof SETUP, label: c.label }))}
       />
       <div id={panelId} role="tabpanel" className="mt-3 overflow-hidden rounded-md border border-line bg-surface">
-        <div className="flex h-10 items-center justify-between gap-3 border-b border-line pr-2 pl-4">
+        <div className="flex h-10 items-center justify-between gap-3 border-b border-line bg-bg pr-2 pl-4">
           <span className="font-mono text-xs text-fg-2">{s.file}</span>
           <CopyButton text={s.body} className="h-7" />
         </div>

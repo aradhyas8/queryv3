@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  /* Black and white only. Emphasis is white against gray, never a hue. */
-  --bg: #0a0a0a;
-  --surface: #111111;
-  --surface-2: #161616;
-  --line: #222222;
-  --line-strong: #333333;
-  --fg: #fafafa;
-  --fg-2: #a1a1a1;
-  --fg-3: #7a7a7a;
-  --invert-hover: #e5e5e5;
-  color-scheme: dark;
+  /* Light theme throughout. Hue-free: emphasis is ink against gray, never a color. */
+  --bg: #ffffff;
+  --surface: #f7f7f7;
+  --surface-2: #f4f4f5;
+  --line: #e5e5e5;
+  --line-strong: #d4d4d4;
+  --fg: #0a0a0a;
+  --fg-2: #525252;
+  --fg-3: #6b6b6b;
+  --fg-hover: #262626;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -23,7 +23,7 @@
   --color-fg: var(--fg);
   --color-fg-2: var(--fg-2);
   --color-fg-3: var(--fg-3);
-  --color-invert-hover: var(--invert-hover);
+  --color-fg-hover: var(--fg-hover);
 }
 
 /* next/font variables live on <html>, so the theme can reference them at :root */
