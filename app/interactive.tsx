@@ -1,149 +1,89 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 
 const DSN = "postgres://user:password@localhost:5432/my_database";
 
-function Tabs<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-  panelId,
-}: {
-  label: string;
-  value: T;
-  options: { id: T; label: string }[];
-  onChange: (v: T) => void;
-  panelId: string;
-}) {
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-    const i = options.findIndex((o) => o.id === value);
-    const next = options[(i + (e.key === "ArrowRight" ? 1 : options.length - 1)) % options.length];
-    onChange(next.id);
-    (e.currentTarget.querySelector(`[data-id="${next.id}"]`) as HTMLElement | null)?.focus();
-  };
-  return (
-    <div role="tablist" aria-label={label} onKeyDown={onKey} className="flex flex-wrap gap-1">
-      {options.map((o) => {
-        const on = o.id === value;
-        return (
-          <button
-            key={o.id}
-            data-id={o.id}
-            role="tab"
-            aria-selected={on}
-            aria-controls={panelId}
-            tabIndex={on ? 0 : -1}
-            onClick={() => onChange(o.id)}
-            className={`h-8 cursor-pointer rounded-md border px-3 font-mono text-xs transition-colors duration-150 ${
-              on ? "border-line-strong bg-surface-2 text-fg" : "border-transparent text-fg-3 hover:text-fg"
-            }`}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export function CopyButton({ text, className = "" }: { text: string; className?: string }) {
+export function CopyButton({ text, label = false }: { text: string; label?: boolean }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      return; // clipboard blocked (insecure context); the command stays selectable
+      return; // clipboard blocked (insecure context); the text stays selectable
     }
     setCopied(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(false), 1600);
   };
+  const Icon = copied ? Check : Copy;
   return (
     <button
       type="button"
       onClick={copy}
-      aria-label={copied ? "Copied" : "Copy command"}
-      className={`flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-line px-2.5 font-mono text-xs text-fg-2 transition-colors duration-150 hover:border-line-strong hover:text-fg ${className}`}
+      aria-label={copied ? "Copied" : "Copy to clipboard"}
+      className={`flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded font-mono text-xs transition-colors duration-150 ${
+        copied ? "text-green" : "text-fg-7 hover:text-fg-4"
+      } ${label ? "h-6 px-1" : "h-6 w-6"}`}
     >
-      {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
-      <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+      <Icon size={13} aria-hidden />
+      {label && <span aria-live="polite">{copied ? "copied" : "copy"}</span>}
     </button>
   );
 }
 
-/** A command shown wrapped for reading; the copy button copies the one-line form. */
-export function CommandBar({ lines, copy }: { lines: string[]; copy: string }) {
+/** One-line command with a `$` prompt and an icon copy button. Truncates rather than overflowing. */
+export function InlineCommand({ cmd, className = "" }: { cmd: string; className?: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-md border border-line bg-surface py-3 pr-3 pl-4">
-      <pre className="min-w-0 flex-1 overflow-x-auto py-1.5 font-mono text-[13px] leading-[1.65] text-fg">
-        {lines.map((l, i) => (
-          <span key={i} className="block whitespace-pre">
-            {i === 0 ? <span className="text-fg-3 select-none">$ </span> : "  "}
-            {l}
-          </span>
-        ))}
-      </pre>
-      <CopyButton text={copy} />
-    </div>
-  );
-}
-
-const INSTALL = {
-  claude: {
-    label: "Claude Code",
-    lines: ["claude mcp add queryio \\", `  -e QUERYIO_DATABASE_URL="${DSN}" \\`, "  -- npx -y queryio"],
-    copy: `claude mcp add queryio -e QUERYIO_DATABASE_URL="${DSN}" -- npx -y queryio`,
-  },
-  codex: {
-    label: "Codex",
-    lines: ["codex mcp add queryio \\", `  --env QUERYIO_DATABASE_URL="${DSN}" \\`, "  -- npx -y queryio"],
-    copy: `codex mcp add queryio --env QUERYIO_DATABASE_URL="${DSN}" -- npx -y queryio`,
-  },
-  check: {
-    label: "Preflight",
-    lines: ["npx -y queryio check"],
-    copy: "npx -y queryio check",
-  },
-};
-
-export function InstallCommand() {
-  const [tab, setTab] = useState<keyof typeof INSTALL>("claude");
-  const panelId = useId();
-  const cmd = INSTALL[tab];
-  return (
-    <div className="text-left">
-      <Tabs
-        label="Install command"
-        value={tab}
-        onChange={setTab}
-        panelId={panelId}
-        options={Object.entries(INSTALL).map(([id, c]) => ({ id: id as keyof typeof INSTALL, label: c.label }))}
-      />
-      <div id={panelId} role="tabpanel" className="mt-3">
-        <CommandBar lines={cmd.lines} copy={cmd.copy} />
+    <div
+      className={`flex h-11 min-w-0 items-center justify-between gap-4 rounded-lg border border-line bg-cmd px-4 transition-colors duration-150 hover:border-line-hover ${className}`}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 font-mono text-sm text-fg-6 select-none">$</span>
+        <code className="truncate font-mono text-sm text-fg">{cmd}</code>
       </div>
+      <CopyButton text={cmd} />
     </div>
   );
 }
 
-const SETUP = {
-  claude: {
-    label: "Claude Code",
-    file: "terminal",
-    body: `# Project scope (.mcp.json at repo root)
-claude mcp add queryio -e QUERYIO_DATABASE_URL="${DSN}" -- npx -y queryio
+/** Window chrome around code: traffic lights, a centered title, optional copy. */
+export function Terminal({
+  title,
+  copy,
+  head,
+  children,
+  className = "",
+}: {
+  title: string;
+  copy?: string;
+  head?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`min-w-0 overflow-hidden rounded-xl border border-line bg-term ${className}`}>
+      <div className="relative flex h-10 items-center justify-between gap-3 border-b border-line-term bg-term-head px-4">
+        <div className="flex items-center gap-1.5" aria-hidden>
+          <span className="h-3 w-3 rounded-full bg-red" />
+          <span className="h-3 w-3 rounded-full bg-yellow" />
+          <span className="h-3 w-3 rounded-full bg-green" />
+        </div>
+        {head ?? (
+          <span className="absolute left-1/2 max-w-[50%] -translate-x-1/2 truncate font-mono text-xs text-fg-5">{title}</span>
+        )}
+        {copy ? <CopyButton text={copy} label /> : <span />}
+      </div>
+      {children}
+    </div>
+  );
+}
 
-# User scope (~/.claude.json)
-claude mcp add -s user queryio -e QUERYIO_DATABASE_URL="${DSN}" -- npx -y queryio`,
-  },
+const CLIENTS = {
   json: {
     label: ".mcp.json",
-    file: ".mcp.json",
     body: `{
   "mcpServers": {
     "queryio": {
@@ -157,8 +97,7 @@ claude mcp add -s user queryio -e QUERYIO_DATABASE_URL="${DSN}" -- npx -y queryi
 }`,
   },
   codex: {
-    label: "Codex",
-    file: "~/.codex/config.toml",
+    label: "~/.codex/config.toml",
     body: `[mcp_servers.queryio]
 command = "npx"
 args = ["-y", "queryio"]
@@ -167,26 +106,50 @@ QUERYIO_DATABASE_URL = "${DSN}"`,
   },
 };
 
-export function SetupConfig() {
-  const [tab, setTab] = useState<keyof typeof SETUP>("json");
+type Client = keyof typeof CLIENTS;
+
+/** Config file for MCP clients other than the Claude Code CLI, with file tabs in the window header. */
+export function ClientConfig() {
+  const [tab, setTab] = useState<Client>("json");
   const panelId = useId();
-  const s = SETUP[tab];
+  const ids = Object.keys(CLIENTS) as Client[];
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const next = ids[(ids.indexOf(tab) + 1) % ids.length];
+    setTab(next);
+    (e.currentTarget.querySelector(`[data-id="${next}"]`) as HTMLElement | null)?.focus();
+  };
   return (
-    <div className="min-w-0">
-      <Tabs
-        label="MCP client"
-        value={tab}
-        onChange={setTab}
-        panelId={panelId}
-        options={Object.entries(SETUP).map(([id, c]) => ({ id: id as keyof typeof SETUP, label: c.label }))}
-      />
-      <div id={panelId} role="tabpanel" className="mt-3 overflow-hidden rounded-md border border-line bg-surface">
-        <div className="flex h-10 items-center justify-between gap-3 border-b border-line bg-bg pr-2 pl-4">
-          <span className="font-mono text-xs text-fg-2">{s.file}</span>
-          <CopyButton text={s.body} className="h-7" />
+    <Terminal
+      title={CLIENTS[tab].label}
+      copy={CLIENTS[tab].body}
+      head={
+        <div role="tablist" aria-label="Config file" onKeyDown={onKey} className="flex min-w-0 gap-1">
+          {ids.map((id) => {
+            const on = id === tab;
+            return (
+              <button
+                key={id}
+                data-id={id}
+                role="tab"
+                aria-selected={on}
+                aria-controls={panelId}
+                tabIndex={on ? 0 : -1}
+                onClick={() => setTab(id)}
+                className={`h-6 cursor-pointer truncate rounded px-2 font-mono text-xs transition-colors duration-150 ${
+                  on ? "bg-bg text-fg" : "text-fg-5 hover:text-fg"
+                }`}
+              >
+                {CLIENTS[id].label}
+              </button>
+            );
+          })}
         </div>
-        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-[1.65] text-fg">{s.body}</pre>
-      </div>
-    </div>
+      }
+    >
+      <pre id={panelId} role="tabpanel" className="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-fg">
+        {CLIENTS[tab].body}
+      </pre>
+    </Terminal>
   );
 }
