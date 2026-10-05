@@ -201,13 +201,13 @@ export default function Home() {
       {/* Hero */}
       <Section id="top" className="pt-24 pb-20">
         <p className="font-mono text-xs tracking-widest text-fg-6 uppercase">
-          PostgreSQL MCP <span className="px-2">·</span> for coding agents
+          PostgreSQL MCP <span className="px-2">·</span> for your AI agents
         </p>
         <h1 className="mt-8 max-w-2xl text-4xl leading-[1.05] font-bold tracking-tight text-ink sm:text-5xl">
-          Database context for coding agents.
+          Database context for your AI agents.
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-fg-2">
-          Your coding agent knows your code. QueryIO lets it inspect the real PostgreSQL records behind it — including
+          Your AI agent knows your code. QueryIO lets it inspect the real PostgreSQL records behind it — including
           the rows connected to them — and use SQL when it needs to go deeper.
         </p>
         <div className="mt-10 flex max-w-md flex-col gap-3 sm:flex-row">
@@ -374,7 +374,7 @@ export default function Home() {
       <Section id="benchmark">
         <SectionLabel className="mb-4">Benchmark</SectionLabel>
         <p className="mb-10 max-w-xl text-sm leading-relaxed text-fg-4">
-          A coding agent ran five tasks against a seeded SaaS database with raw psql or QueryIO, with DBHub as a
+          An AI agent ran five tasks against a seeded SaaS database with raw psql or QueryIO, with DBHub as a
           reference: 25 runs, every answer graded by hand. Three tasks were about specific records; two counted across
           many rows.
         </p>
@@ -409,10 +409,10 @@ export default function Home() {
         <div className="flex flex-col items-center gap-6 rounded-2xl border border-line bg-cmd px-6 py-14 text-center">
           <SectionLabel className="">Get started</SectionLabel>
           <h2 className="max-w-md text-3xl leading-tight font-bold tracking-tight text-fg">
-            Give your coding agent the database context it is missing.
+            Give your AI agent the database context it is missing.
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-fg-4">
-            Connect PostgreSQL and start investigating real records from your coding agent.
+            Connect PostgreSQL and start investigating real records from your AI agent.
           </p>
           <div className="flex w-full max-w-md flex-col items-stretch gap-3 sm:flex-row sm:items-center">
             <InlineCommand cmd={RUN} className="flex-1 bg-bg" />

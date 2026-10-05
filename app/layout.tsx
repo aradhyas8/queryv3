@@ -13,9 +13,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QueryIO — database context for coding agents",
+  title: "QueryIO — database context for your AI agents",
   description:
-    "A PostgreSQL MCP for coding agents. Start from one record and see the rows linked to it, then use read-only SQL when the agent needs to go deeper.",
+    "A PostgreSQL MCP for your AI agents. Start from one record and see the rows linked to it, then use read-only SQL when the agent needs to go deeper.",
 };
 
 export default function RootLayout({
