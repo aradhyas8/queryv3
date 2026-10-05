@@ -50,85 +50,6 @@ const ghostLink =
   "rounded-md border border-line px-3 py-1.5 font-mono text-xs text-fg-4 transition-colors duration-150 hover:border-fg-7 hover:text-ink";
 const mono = "font-mono text-[13px] text-fg";
 
-/* ---------- demo ---------- */
-
-const c = {
-  dim: "text-fg-6",
-  key: "text-fg-5",
-  tool: "text-fg-3",
-};
-
-/** One terminal line; `pad` aligns key/value columns without a table. */
-function L({ children, hit = false }: { children?: ReactNode; hit?: boolean }) {
-  return (
-    <div className={`-mx-5 px-5 whitespace-pre ${hit ? "bg-term-head text-ink" : ""}`}>{children ?? " "}</div>
-  );
-}
-
-const kv = (k: string, v: ReactNode, w = 22) => (
-  <>
-    <span className={c.key}>{("  " + k).padEnd(w)}</span>
-    {v}
-  </>
-);
-
-function Demo() {
-  return (
-    <div className="overflow-x-auto px-5 py-6 font-mono text-[13px] leading-6 text-fg-2">
-      <div className="w-max min-w-full">
-        <L>
-          <span className={c.dim}>&gt; </span>
-          <span className="text-ink">User 4821 says their account never activated. Find out why.</span>
-        </L>
-        <L />
-        <L>
-          <span className="text-green">●</span> <span className={c.tool}>read</span> src/activation.ts
-        </L>
-        <L>
-          <span className={c.dim}>{"  "}activateUser() requires a membership in the user&apos;s current org</span>
-        </L>
-        <L />
-        <L>
-          <span className="text-green">●</span> <span className={c.tool}>inspect_row</span> public.users{" "}
-          <span className={c.dim}>{'{"id": 4821}'}</span>
-        </L>
-        <L />
-        <L>
-          <span className="text-ink">{"  "}users · 4821</span>
-        </L>
-        <L hit>{kv("status", "pending")}</L>
-        <L>{kv("org_id", "88")}</L>
-        <L>{kv("email_verified_at", "2026-10-04 07:31+00")}</L>
-        <L>{kv("activated_at", "null")}</L>
-        <L>{kv("password_hash", <span className={c.key}>[redacted]</span>)}</L>
-        <L />
-        <L>
-          <span className="text-ink">{"  "}linked rows</span>
-        </L>
-        <L>{kv("organizations", <>1 row{"    "}<span className={c.key}>88 · active</span></>, 30)}</L>
-        <L hit>{kv("memberships", <>1 row{"    "}org 21 · none for org 88</>, 30)}</L>
-        <L>{kv("email_verification_tokens", <>2 rows{"   "}<span className={c.key}>1 expired · 1 consumed</span></>, 30)}</L>
-        <L>{kv("user_events", <>5 rows{"   "}<span className={c.key}>has_more · org.transferred 21 → 88</span></>, 30)}</L>
-        <L>{kv("api_keys", <>0 rows</>, 30)}</L>
-        <L />
-        <L>
-          <span className="text-green">●</span> <span className={c.tool}>query</span>{" "}
-          SELECT 1 FROM memberships WHERE org_id = 88 AND user_id = 4821
-        </L>
-        <L>
-          <span className={c.dim}>{"  "}0 rows</span>
-        </L>
-      </div>
-      <div className="mt-6 rounded-lg border border-line bg-bg p-4 font-sans text-sm leading-relaxed text-fg-2">
-        <p className="mb-1 font-mono text-xs tracking-widest text-fg-6 uppercase">Finding</p>
-        The email is verified, so the expired token is a red herring. <code className={mono}>activateUser</code> needs a
-        membership in org 88, but the only one is in org 21. <code className={mono}>transferUser</code> moved{" "}
-        <code className={mono}>users.org_id</code> without moving the membership.
-      </div>
-    </div>
-  );
-}
-
 /* ---------- content ---------- */
 
 const STEPS: { n: string; title: string; window: string; copy?: string; code: ReactNode; body: string }[] = [
@@ -301,15 +222,18 @@ export default function Home() {
         <p className="mb-10 max-w-md text-sm leading-relaxed text-fg-4">
           Start from a real record. See the context around it before the agent decides what to query next.
         </p>
-        <Terminal
-          title="claude · queryio"
-          className="shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_24px_64px_-12px_rgb(0_0_0/0.12)]"
+        <video
+          src="/queryio-film-web.mp4"
+          poster="/queryio-film-poster.png"
+          autoPlay
+          muted
+          loop
+          controls
+          playsInline
+          className="w-full rounded-xl border border-line bg-cmd shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_24px_64px_-12px_rgb(0_0_0/0.12)]"
         >
-          <Demo />
-        </Terminal>
-        <p className="mt-4 text-center font-mono text-xs text-fg-5">
-          Illustrative session on the QueryIO benchmark fixture · output abridged
-        </p>
+          QueryIO demo video.
+        </video>
       </Section>
 
       {/* How it works */}
