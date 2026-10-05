@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Schibsted_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const schibsted = Schibsted_Grotesk({
-  variable: "--font-schibsted",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QueryIO — Read-only database access for AI agents",
+  title: "QueryIO — Open-source MCP server for PostgreSQL",
   description:
-    "QueryIO is an MCP gateway that gives AI agents three bounded tools instead of database credentials. Writes are refused before a connection opens, and queries run on a read-only replica.",
+    "QueryIO gives coding agents four bounded, read-oriented PostgreSQL tools. Every call runs in a READ ONLY transaction with server-side timeouts, then rolls back.",
 };
 
 export default function RootLayout({
@@ -24,10 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${geistMono.variable}`}>
-      <body>
-        {children}
-      </body>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
