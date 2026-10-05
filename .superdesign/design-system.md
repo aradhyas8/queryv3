@@ -17,22 +17,14 @@ Page goal: copy the install command, open the GitHub repo.
 - Benchmark numbers only as published in BENCHMARK.md, and state that the pre-declared win condition was NOT met.
 - Security language must match README "Security Posture (Stated Honestly)": QueryIO is the safe default path, not a sandbox.
 
-## Colors (dark only)
+## Colors (light-first, with dark developer surfaces)
 
-| Token | Value | Use |
-|---|---|---|
-| bg | `#0A0A0A` | page canvas (~90% of pixels) |
-| surface | `#111111` | panels, code blocks, nav |
-| surface-2 | `#161616` | inset rows, hover, active tab |
-| line | `#222222` | hairline borders (1px) |
-| line-strong | `#333333` | emphasized borders, dividers in tables |
-| text | `#FAFAFA` | headlines, primary text |
-| text-2 | `#A1A1A1` | body/secondary |
-| text-3 | `#6B6B6B` | labels, captions, line numbers, muted code |
-| invert-bg | `#FAFAFA` | primary button fill |
-| invert-text | `#0A0A0A` | primary button text |
+Page tokens (`:root`): bg `#FFFFFF`, surface `#FAFAFA`, surface-2 `#F4F4F5`, line `#E8E8E8`, line-strong `#D4D4D4`, fg `#0A0A0A`, fg-2 `#525252`, fg-3 `#6B6B6B`.
 
-No hue anywhere. No purple, no gradients except a 1-element fade scrim on code overflow. No glow, no glassmorphism, no blur. Emphasis = white vs gray, weight, underline, or a solid white 1px bracket. Code syntax highlighting is grayscale: keywords `#FAFAFA`, strings `#A1A1A1`, comments/punctuation `#6B6B6B`.
+Light theme throughout: every surface, including code and terminal panels, uses bg `#FFFFFF` or surface `#F7F7F7`, border `#E5E5E5`.
+
+
+No dark surfaces or sections. Black only for text, borders, and primary buttons. No hue, gradients, glow, glassmorphism, or blur. One soft shadow under the investigation panel. Primary button = fg fill, bg text.
 
 ## Typography
 
@@ -49,8 +41,8 @@ No hue anywhere. No purple, no gradients except a 1-element fade scrim on code o
 
 ## Layout
 
-- Container 1120px max, centered, 24px side padding (16px mobile).
-- Container edges marked by 1px `line` vertical rules running full page height (the "ledger" frame). Sections separated by full-width 1px horizontal rules that meet the vertical rules. No dotted grid textures, no crosshair stars.
+- Every section is full viewport width; only inner content is constrained to 1240px with 32px side padding (20px mobile). No outer page shell or vertical edge rules.
+- Sections separated by full-width 1px horizontal rules. Hero is min(100svh - nav, 960px) tall, content vertically centered. No dotted grid textures, no crosshair stars.
 - Section padding: 112px vertical desktop, 72px mobile. Chapter header (index label + h2 + 1-line subhead) then content 56px below.
 - Grids: 12-col; prefer wide full-width panels and 2-up splits (1fr 1fr, 16px gap) over bento. 3-up only for short benefit cells, separated by shared 1px borders (table-like, no gaps), not floating cards.
 - Spacing scale 4/8/12/16/24/32/48/56/72/112.
@@ -58,8 +50,8 @@ No hue anywhere. No purple, no gradients except a 1-element fade scrim on code o
 
 ## Components
 
-- **Navbar**: sticky, full width, 64px, bg `#0A0A0A` with bottom 1px line. Left: wordmark "QueryIO" (text, weight 600, plus a small square mono glyph `[q]` drawn as text — no invented logo art). Center: Docs/How it works/Benchmark/Security/FAQ anchor links (text-2, 14px). Right: "GitHub" ghost button (1px line border) + "Get started" primary (white fill, black text, 32px height, 6px radius).
-- **Buttons**: primary = white fill, black text, 40px height, 6px radius, weight 500, no shadow. Secondary = transparent, 1px line-strong border, white text. Hover: primary → `#E5E5E5`; secondary → surface-2 bg. Transition 150ms ease.
+- **Navbar**: sticky, full width, 64px, white bg with bottom 1px line. Left: wordmark "QueryIO" (text, weight 600, plus a small square mono glyph `[q]` drawn as text — no invented logo art). Center: Docs/How it works/Benchmark/Security/FAQ anchor links (text-2, 14px). Right: "GitHub" ghost button (1px line border) + "Get started" primary (black fill, white text, 32px height, 6px radius).
+- **Buttons**: primary = black fill, white text, 40px height, 6px radius, weight 500, no shadow. Secondary = transparent, 1px line-strong border, white text. Hover: primary → `#262626`; secondary → surface-2 bg. Transition 150ms ease.
 - **Command bar** (copyable): surface bg, 1px line border, 6px radius, 48px tall, Geist Mono 13px. Leading `$` in text-3, command in text, trailing copy icon button (lucide `Copy` → `Check` on copy, "Copied" label). Tabs above it as small mono chips: `Claude Code` / `Codex` / `Preflight`. Horizontal scroll on overflow, never wrap mid-token.
 - **Terminal / code panel**: surface bg, 1px line border, 6px radius. 36px header row with 1px bottom border: left mono label (e.g. `agent session · claude code`), right mono meta in text-3. No traffic-light dots. Body padding 20px. Optional line numbers in text-3.
 - **Data table**: 0 radius, 1px line borders, header row in label-mono, rows 44px, mono for values. Highlight row: surface-2 bg + white text + 2px white left border.

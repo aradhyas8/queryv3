@@ -1,25 +1,12 @@
 import type { ReactNode } from "react";
-import {
-  ArrowUpRight,
-  Check,
-  EyeOff,
-  FileClock,
-  Gauge,
-  Github,
-  Minus,
-  Network,
-  Plus,
-  ShieldCheck,
-  Terminal,
-  Timer,
-  TriangleAlert,
-} from "lucide-react";
+import { ArrowUpRight, Check, Github, Minus, ShieldCheck, TriangleAlert } from "lucide-react";
 import { CommandBar, InstallCommand, SetupConfig } from "./interactive";
 
 const REPO = "https://github.com/aradhyas8/queryio-mcp";
 const LINKS = {
   repo: REPO,
   readme: `${REPO}#readme`,
+  config: `${REPO}#configuration--defaults`,
   benchmark: `${REPO}/blob/main/BENCHMARK.md`,
   issues: `${REPO}/issues`,
   license: `${REPO}/blob/main/LICENSE`,
@@ -27,136 +14,52 @@ const LINKS = {
 };
 
 const NAV = [
-  { href: "#how", label: "How it works" },
+  { href: "#example", label: "Example" },
+  { href: "#compare", label: "Why not psql" },
+  { href: "#trust", label: "Guarantees" },
   { href: "#benchmark", label: "Benchmark" },
-  { href: "#security", label: "Security" },
   { href: "#setup", label: "Setup" },
-  { href: "#faq", label: "FAQ" },
 ];
 
-const TRUST = [
-  ["License", "MIT"],
-  ["Transport", "MCP stdio"],
-  ["Database", "PostgreSQL"],
-  ["Tools", "4 read-oriented"],
-  ["Install", "npx -y queryio"],
-];
-
-const BENEFITS = [
-  {
-    icon: Network,
-    title: "Record neighborhoods in one call",
-    body: "inspect_row returns a row plus its depth-1 foreign-key neighbors, in both directions.",
-  },
-  {
-    icon: Gauge,
-    title: "Bounded by default",
-    body: "100 rows, 32 KB per response, 200-character values. has_more instead of expensive counts.",
-  },
-  {
-    icon: Timer,
-    title: "Server-side timeouts",
-    body: "statement_timeout 5s and lock_timeout 1s are enforced inside Postgres, not abandoned client-side.",
-  },
-  {
-    icon: EyeOff,
-    title: "Secrets stay out of context",
-    body: "password, token, api_key and similar columns come back as [redacted].",
-  },
-  {
-    icon: FileClock,
-    title: "Metadata-only audit log",
-    body: "One JSONL line per call in ~/.queryio/audit.jsonl. No row values or raw SQL by default.",
-  },
-  {
-    icon: Terminal,
-    title: "No config files",
-    body: "Environment variables only, so credentials never show up in process listings.",
-  },
-];
-
-const STEPS: [string, ReactNode][] = [
-  ["Set the connection string", <code key="c">QUERYIO_DATABASE_URL</code>],
-  ["Run the preflight", <code key="c">npx -y queryio check</code>],
-  ["Add QueryIO to your MCP client", "Claude Code, Codex, or any stdio MCP client"],
-  ["Ask a debugging question", "“User 4821 says their account never activated.”"],
-];
-
-const TOOLS = [
-  ["inspect_row", "One row by primary key plus its foreign-key neighborhood, bounded, truncated, and redacted."],
-  ["describe_tables", "Columns, keys, indexes, and pg_stats planner statistics for several tables at once."],
-  ["list_tables", "Compact catalog with planner row estimates. Never scans tables."],
-  ["query", "One bounded read-only statement: SELECT, WITH, VALUES, TABLE, or SHOW."],
+const USE_CASES = [
+  ["Explain a customer report", "Why is this customer still on the free plan?"],
+  ["Check an assumption before you build", "Is email ever null in production data?"],
+  ["Follow a record across tables", "Show me order 5531 and everything attached to it."],
+  ["Answer a support question", "How many accounts signed up this week but never verified?"],
+  ["Investigate an incident", "Which jobs failed after the 2pm deploy?"],
+  ["Find data that breaks the rules", "Are there refunded orders with no refund record?"],
 ];
 
 const COMPARE = [
-  ["Write protection", "Depends on the role", "Varies by server", "READ ONLY transaction, unconditional ROLLBACK"],
-  ["Timeouts", "None by default", "Often client-side", "Statement and lock timeouts inside Postgres"],
-  ["Result size", "Unbounded", "Varies", "Row, byte, and value caps"],
-  ["Secret columns", "Returned as-is", "Varies", "Name-based redaction"],
-  ["Investigating one record", "Chain of manual joins", "Chain of exploratory queries", "inspect_row, one call"],
-  ["Audit trail", "Shell history", "Varies", "Metadata-only JSONL"],
+  ["Writes", "Whatever the role allows.", "Nothing can commit. Every call is rolled back."],
+  ["Slow queries", "Run until someone notices.", "Postgres cancels them after 5 seconds by default."],
+  ["Huge results", "Every row lands in the agent’s context.", "Capped at 100 rows and 32 KB, with a flag when there’s more."],
+  ["Related records", "One join at a time.", "One lookup returns a record and the rows directly linked to it."],
+  ["Secret fields", "Password hashes and tokens come back as-is.", "Common secret columns come back as [redacted]."],
+  ["Audit trail", "Shell history, maybe.", "One log line per call, without the data."],
 ];
 
-const STATS = [
-  ["−38.5%", "Median DB output bytes", "Forensic tasks, vs raw psql"],
-  ["−18.8%", "Median DB interactions", "Forensic tasks, vs raw psql"],
-  ["100%", "Diagnostic accuracy", "All three arms, graded by hand"],
-];
-
-const ENFORCED = [
-  "Single-statement extended query protocol",
-  "BEGIN READ ONLY and ROLLBACK on every call",
-  "Statement and lock timeouts set inside Postgres",
-  "Cursor streaming with bounded memory",
-  "Catalog-resolved identifiers and bind parameters",
-  "No DSNs on the command line, no .env scanning",
+const GUARANTEED = [
+  "Nothing your agent runs can commit a write.",
+  "Slow or blocked queries are cancelled inside Postgres, not just abandoned.",
+  "One statement per call. No chaining.",
+  "Credentials come only from an environment variable. Never from command-line arguments or .env files.",
 ];
 
 const NOT_GUARANTEED = [
-  "QueryIO is the safe default path, not a sandbox",
-  "A superuser role breaks containment",
-  "Name-based redaction can be bypassed with aliases in query",
-  "dblink and FDW connections escape the read-only transaction",
+  "QueryIO is not a sandbox. An agent that can read DATABASE_URL and run psql on its own can go around it.",
+  "Secret masking matches column names. A hand-written query can rename a column to get past it.",
+  "A superuser role, dblink or foreign data wrappers break the read-only guarantee.",
 ];
 
-const ROLE_SQL = `CREATE ROLE queryio_role WITH LOGIN PASSWORD 'CHANGE_ME_PASSWORD';
-GRANT CONNECT ON DATABASE "your_database" TO queryio_role;
-GRANT USAGE ON SCHEMA public TO queryio_role;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO queryio_role;`;
-
-const DEFAULTS = [
-  ["QUERYIO_STATEMENT_TIMEOUT_MS", "5000"],
-  ["QUERYIO_LOCK_TIMEOUT_MS", "1000"],
-  ["QUERYIO_MAX_ROWS", "100"],
-  ["QUERYIO_MAX_RESPONSE_BYTES", "32768"],
-  ["QUERYIO_MAX_VALUE_LENGTH", "200"],
-  ["QUERYIO_AUDIT_LOG", "~/.queryio/audit.jsonl"],
-];
-
-const FAQ: [string, ReactNode][] = [
-  [
-    "Is QueryIO a sandbox?",
-    "No. It is the safe default path. An agent that already has shell access can still read DATABASE_URL from .env and run psql directly.",
-  ],
-  [
-    "Can it write to my database?",
-    "Every call runs inside BEGIN READ ONLY and ends in ROLLBACK, so INSERT, UPDATE, DELETE, and DDL cannot commit. That guarantee weakens with a superuser role or with dblink and FDW connections, so connect as a dedicated read-only role.",
-  ],
-  ["Which databases are supported?", "PostgreSQL."],
-  ["Which agents work with it?", "Any MCP client that runs stdio servers, including Claude Code, Codex, and Cursor."],
-  [
-    "What gets logged?",
-    "One JSON line per tool call: timestamp, tool, duration, status, tables, row and byte counts, and a SHA-256 fingerprint of the SQL. Row values, primary-key values, and raw SQL are never logged unless you set QUERYIO_AUDIT_INCLUDE_SQL=true. Set QUERYIO_AUDIT_LOG=off to disable it.",
-  ],
-  [
-    "Why does inspect_row need a primary key?",
-    "It addresses one concrete row. Tables without a declared primary key return a no_primary_key error, and composite keys need every column. Use query for anything else.",
-  ],
+const STATS = [
+  ["−38.5%", "Less database output", "Median, investigation tasks, vs raw psql"],
+  ["−18.8%", "Fewer database calls", "Median, investigation tasks, vs raw psql"],
+  ["100%", "Correct answers", "Every arm, graded by hand"],
 ];
 
 const FOOTER: [string, [string, string][]][] = [
-  ["Product", [["How it works", "#how"], ["Benchmark", "#benchmark"], ["Security", "#security"], ["Setup", "#setup"]]],
+  ["Product", [["Example", "#example"], ["Why not psql", "#compare"], ["Guarantees", "#trust"], ["Setup", "#setup"]]],
   ["Resources", [["README", LINKS.readme], ["BENCHMARK.md", LINKS.benchmark], ["npm", LINKS.npm]]],
   ["Project", [["GitHub", LINKS.repo], ["Issues", LINKS.issues], ["MIT License", LINKS.license]]],
 ];
@@ -165,53 +68,77 @@ const FOOTER: [string, [string, string][]][] = [
 
 const btn =
   "inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium whitespace-nowrap transition-colors duration-150";
-const btnPrimary = `${btn} bg-fg text-bg hover:bg-invert-hover`;
+const btnPrimary = `${btn} bg-fg text-bg hover:bg-fg-hover`;
 const btnSecondary = `${btn} border border-line-strong text-fg hover:bg-surface-2`;
+const textLink =
+  "inline-flex items-center gap-1 text-sm text-fg underline decoration-line-strong underline-offset-4 transition-colors hover:decoration-fg";
 
-function Frame({ id, children, className = "" }: { id?: string; children: ReactNode; className?: string }) {
+/** Full-width section canvas; only the inner content is constrained. */
+function Frame({
+  id,
+  children,
+  className = "",
+  tone = "paper",
+}: {
+  id?: string;
+  children: ReactNode;
+  className?: string;
+  tone?: "paper" | "muted";
+}) {
+  const bg = tone === "muted" ? "bg-surface" : "bg-bg";
   return (
-    <section id={id} className="border-b border-line">
-      <div className={`mx-auto max-w-[1120px] px-4 sm:border-x sm:border-line sm:px-6 ${className}`}>{children}</div>
+    <section id={id} className={`border-b border-line ${bg}`}>
+      <div className={`mx-auto max-w-[1240px] px-5 sm:px-8 ${className}`}>{children}</div>
     </section>
   );
 }
 
-function Chapter({ index, label, title, tail }: { index: string; label: string; title: string; tail: string }) {
+function Chapter({ eyebrow, title, tail, children }: { eyebrow: string; title: string; tail?: string; children?: ReactNode }) {
   return (
     <header className="mb-12 max-w-[52rem] md:mb-14">
-      <p className="font-mono text-xs tracking-[0.06em] text-fg-3 uppercase">
-        [ {index} / 09 ]&nbsp;&nbsp;{label}
-      </p>
+      <p className={label}>{eyebrow}</p>
       <h2 className="mt-5 text-[32px] leading-[1.08] font-medium tracking-[-0.03em] md:text-[44px]">
-        {title} <span className="text-fg-2">{tail}</span>
+        {title} {tail && <span className="text-fg-2">{tail}</span>}
       </h2>
+      {children && <div className="mt-6 max-w-[44rem] space-y-4 text-[17px] leading-[1.6] text-fg-2">{children}</div>}
     </header>
   );
 }
 
 const label = "font-mono text-xs tracking-[0.06em] text-fg-3 uppercase";
+const codeCls = "font-mono text-[13px] text-fg";
 
-/* ---------- investigation demo ---------- */
+function Step({ n, title, children }: { n: string; title: string; children?: ReactNode }) {
+  return (
+    <div className="mb-4">
+      <p className="font-medium text-fg">
+        <span className="mr-3 font-mono text-xs text-fg-3">{n}</span>
+        {title}
+      </p>
+      {children && <p className="mt-2 text-sm leading-relaxed text-fg-2">{children}</p>}
+    </div>
+  );
+}
+
+/* ---------- example session ---------- */
 
 function Transcript() {
   const lines: ReactNode[] = [
     <p key="ask" className="text-fg">
-      <span className="text-fg-3 select-none">&gt; </span>User 4821 says their account never activated. Find out why.
+      <span className="text-fg-3 select-none">&gt; </span>A customer upgraded to Pro yesterday. Their account still says
+      Free. Why?
     </p>,
     <p key="read">
-      <span className="text-fg-3">● read</span> <span className="text-fg">src/activation.ts</span>
-      <span className="block pl-4 text-fg-3">activateUser requires a membership in users.org_id</span>
+      <span className="text-fg-3">● read</span> <span className="text-fg">src/billing/webhooks.ts</span>
+      <span className="block pl-4 text-fg-3">upgrade runs when invoice.paid matches a row in plans</span>
     </p>,
     <p key="inspect">
-      <span className="text-fg-3">● </span>
-      <span className="text-fg">inspect_row</span>{" "}
-      <span className="break-all text-fg-2">{`{"table":"public.users","key":{"id":4821}}`}</span>
-      <span className="block pl-4 text-fg-3">← 1 row + foreign-key neighborhood · password_hash redacted</span>
+      <span className="text-fg-3">● queryio</span> <span className="text-fg">account 1042 and related records</span>
+      <span className="block pl-4 text-fg-3">← plan free · subscription active · invoice.paid failed</span>
     </p>,
     <p key="query">
-      <span className="text-fg-3">● </span>
-      <span className="text-fg">query</span>{" "}
-      <span className="text-fg-2">SELECT 1 FROM memberships WHERE org_id = 88 AND user_id = 4821</span>
+      <span className="text-fg-3">● queryio</span>{" "}
+      <span className="text-fg-2">SELECT id FROM plans WHERE id = &apos;pro_annual&apos;</span>
       <span className="block pl-4 text-fg-3">← 0 rows</span>
     </p>,
   ];
@@ -222,14 +149,11 @@ function Transcript() {
           {l}
         </div>
       ))}
-      <div className="line-in mt-2 rounded-md border border-line bg-bg p-4" style={{ "--i": 4 } as React.CSSProperties}>
-        <p className={label}>Diagnosis</p>
+      <div className="line-in mt-2 rounded-md border border-line bg-surface p-4" style={{ "--i": 4 } as React.CSSProperties}>
+        <p className={label}>Answer</p>
         <p className="mt-2 font-sans text-[15px] leading-relaxed text-fg">
-          User 4821 verified their email but is stuck in <code className="font-mono text-[13px]">pending</code>. Support
-          moved them from org 21 to org 88 with <code className="font-mono text-[13px]">transferUser</code>, which updates{" "}
-          <code className="font-mono text-[13px]">users.org_id</code> without creating a membership in org 88.{" "}
-          <code className="font-mono text-[13px]">activateUser</code> finds none and returns{" "}
-          <code className="font-mono text-[13px]">no_membership</code> silently.
+          The payment went through. The upgrade failed because the new annual Pro price was never added to the{" "}
+          <code className="font-mono text-[13px]">plans</code> table.
           <span aria-hidden className="caret ml-1 inline-block h-4 w-2 translate-y-0.5 bg-fg" />
         </p>
       </div>
@@ -263,38 +187,26 @@ function Row({ cells, hit = false }: { cells: ReactNode[]; hit?: boolean }) {
   );
 }
 
-function InspectResult() {
-  const user = [
-    ["id", "4821"],
-    ["org_id", "88"],
-    ["status", "pending"],
-    ["email_verified_at", "not null"],
-    ["password_hash", "[redacted]"],
-  ];
+const k = (s: string) => <span className="text-fg-3">{s}</span>;
+
+function DataPanel() {
   return (
     <div className="flex flex-col gap-5 p-5">
-      <Rel name="public.users · root">
-        {user.map(([k, v]) => (
-          <Row key={k} cells={[<span key="k" className="text-fg-3">{k}</span>, <span key="v" className="text-fg">{v}</span>]} />
-        ))}
+      <Rel name="accounts · 1042">
+        <Row cells={[k("plan"), "free"]} hit />
+        <Row cells={[k("email"), "dana@example.com"]} />
       </Rel>
-      <Rel name="memberships · incoming">
-        <Row cells={["org_id 21", "user_id 4821", "accepted_at null"]} />
-        <Row hit cells={["no row for org_id = 88"]} />
+      <Rel name="subscriptions">
+        <Row cells={[k("status"), "active"]} />
+        <Row cells={[k("price"), "pro_annual"]} />
       </Rel>
-      <Rel name="user_events · incoming">
-        <Row cells={[<span key="e">user.signed_up <span className="text-fg-3">{`{"org_id":21}`}</span></span>]} />
-        <Row hit cells={[<span key="e">org.transferred {`{"from_org_id":21,"to_org_id":88}`}</span>]} />
-        <Row cells={["email.verified"]} />
+      <Rel name="webhook_events">
+        <Row cells={["invoice.paid", "failed"]} hit />
+        <Row cells={[<span key="e" className="text-fg-3">error: unknown plan pro_annual</span>]} />
       </Rel>
-      <ul className="flex flex-wrap gap-2 font-mono text-[11px]">
-        {["bounded", "truncated", "redacted"].map((t) => (
-          <li key={t} className="rounded-md border border-line px-2 py-1 text-fg-3">
-            {t}
-          </li>
-        ))}
-        <li className="rounded-md border border-line-strong px-2 py-1 text-fg">READ ONLY · ROLLBACK</li>
-      </ul>
+      <Rel name="plans · id = pro_annual">
+        <Row cells={["0 rows"]} hit />
+      </Rel>
     </div>
   );
 }
@@ -305,7 +217,7 @@ export default function Home() {
   return (
     <main id="top">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/95">
-        <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-6 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-6 px-5 sm:px-8">
           <a href="#top" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em]">
             <span className="rounded-[4px] border border-line-strong px-1.5 py-0.5 font-mono text-[11px] font-normal text-fg-2">
               [q]
@@ -320,7 +232,7 @@ export default function Home() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <a href={LINKS.repo} className={`${btnSecondary} hidden h-8 px-3 sm:inline-flex`}>
+            <a href={LINKS.repo} className={`${btnSecondary} h-8 px-3 max-sm:hidden`}>
               <Github size={15} aria-hidden /> GitHub
             </a>
             <a href="#setup" className={`${btnPrimary} h-8 px-3`}>
@@ -330,18 +242,19 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero, command, and the investigation share one frame: claim, action, proof */}
-      <Frame className="pt-20 pb-16 md:pt-28 md:pb-20">
-        <div className="mx-auto max-w-[920px] text-center">
+      {/* 1. Hero */}
+      <Frame className="flex min-h-[min(calc(100svh-4rem),960px)] flex-col justify-center py-20">
+        <div className="mx-auto max-w-[1040px] text-center">
           <p className="inline-flex rounded-md border border-line px-3 py-1.5 font-mono text-xs tracking-[0.06em] text-fg-2 uppercase">
-            Open-source MCP server for PostgreSQL
+            Open source · PostgreSQL · MCP
           </p>
-          <h1 className="mt-8 text-[40px] leading-[1.04] font-medium tracking-[-0.035em] sm:text-[52px] md:text-[64px]">
+          <h1 className="mt-8 text-[40px] leading-[1.04] font-medium tracking-[-0.035em] sm:text-[52px] md:text-[64px] xl:text-[72px]">
             Give your coding agent database access <span className="text-fg-2 md:block">without giving it your database.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-[620px] text-[17px] leading-[1.55] text-fg-2 md:text-lg">
-            QueryIO gives Claude Code, Codex, and Cursor four bounded, read-oriented tools for Postgres. Every call runs in
-            a READ ONLY transaction with server-side timeouts, then rolls back.
+          <p className="mx-auto mt-6 max-w-[640px] text-[17px] leading-[1.55] text-fg-2 md:text-lg">
+            Your agent already knows your code. QueryIO lets it see the data behind it: the actual rows, records and
+            state. Every call runs read-only, with limits you control. Works with Claude Code, Codex and other MCP
+            clients.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <a href="#setup" className={btnPrimary}>
@@ -352,153 +265,108 @@ export default function Home() {
             </a>
           </div>
         </div>
-
-        <div className="mx-auto mt-12 max-w-[820px]">
+        <div className="mx-auto mt-12 w-full max-w-[860px]">
           <InstallCommand />
-          <p className="mt-3 text-left font-mono text-xs leading-relaxed text-fg-3">
-            Credentials are read only from QUERYIO_DATABASE_URL. QueryIO refuses DSNs passed as arguments and never scans
-            .env files.
-          </p>
         </div>
+      </Frame>
 
-        <figure className="mt-16 overflow-hidden rounded-md border border-line bg-surface text-left md:mt-20">
-          <figcaption className="flex h-10 items-center justify-between gap-4 border-b border-line px-5 font-mono text-xs">
-            <span className="truncate text-fg-2">agent session · claude code + queryio</span>
-            <span className="hidden text-fg-3 sm:inline">condensed from benchmark task 1</span>
+      {/* 2. Problem */}
+      <Frame id="problem" className="py-20 md:py-24">
+        <Chapter eyebrow="The problem" title="Your agent knows the code." tail="It can’t see the data.">
+          <p>
+            It can read every line of your application and still not know why a real customer, order, subscription or
+            job is in the wrong state. The answer is in a row it can’t see.
+          </p>
+          <p>
+            So you paste query results into the chat. Or you hand it <code className={codeCls}>DATABASE_URL</code> and
+            hope it only runs SELECTs.
+          </p>
+          <p className="text-fg">
+            QueryIO is the middle path. Your agent checks the real data itself, through a connection that can’t write,
+            can’t run forever and can’t flood its context.
+          </p>
+        </Chapter>
+      </Frame>
+
+      {/* 3. Example */}
+      <Frame id="example" tone="muted" className="py-16 md:py-20">
+        <figure className="overflow-hidden rounded-lg border border-line bg-bg text-left shadow-[0_16px_40px_-24px_rgb(0_0_0/0.12)]">
+          <figcaption className="flex h-10 items-center justify-between gap-4 border-b border-line bg-surface px-5 font-mono text-xs">
+            <span className="truncate text-fg-2">agent session · coding agent + queryio</span>
+            <span className="shrink-0 text-fg-3">illustrative example</span>
           </figcaption>
           <div className="grid lg:grid-cols-2 lg:divide-x lg:divide-line">
             <Transcript />
             <div className="border-t border-line lg:border-t-0">
-              <InspectResult />
+              <DataPanel />
             </div>
           </div>
         </figure>
+        <p className="mt-8 text-center text-[22px] leading-snug font-medium tracking-[-0.02em] md:text-[26px]">
+          The code said what should happen. <span className="text-fg-2">The data showed what did.</span>
+        </p>
       </Frame>
 
-      {/* Technical trust strip */}
-      <Frame>
-        <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-          {TRUST.map(([k, v]) => (
-            <div
-              key={k}
-              className="border-line px-1 py-6 not-last:border-b sm:px-5 sm:not-last:border-b-0 lg:border-r lg:first:pl-0 lg:last:border-r-0"
-            >
-              <dt className={label}>{k}</dt>
-              <dd className={`mt-2 text-sm text-fg ${k === "Install" ? "font-mono" : ""}`}>{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </Frame>
-
-      <Frame id="why" className="py-20 md:py-24">
-        <Chapter index="02" label="Why QueryIO" title="Runtime truth for your agent." tail="Without the blast radius." />
+      {/* 4. Use cases */}
+      <Frame id="use-cases" className="py-20 md:py-24">
+        <Chapter eyebrow="Use cases" title="Ask questions" tail="that need the real data." />
         <ul className="grid border-t border-l border-line sm:grid-cols-2 lg:grid-cols-3">
-          {BENEFITS.map((b) => (
-            <li key={b.title} className="border-r border-b border-line p-7 md:p-8">
-              <b.icon size={18} aria-hidden className="text-fg" />
-              <h3 className="mt-6 text-[17px] leading-snug font-medium">{b.title}</h3>
-              <p className="mt-2 leading-relaxed text-fg-2">{b.body}</p>
+          {USE_CASES.map(([title, ask]) => (
+            <li key={title} className="border-r border-b border-line p-7 md:p-8">
+              <h3 className="text-[17px] leading-snug font-medium">{title}</h3>
+              <p className="mt-3 font-mono text-[13px] leading-relaxed text-fg-2">“{ask}”</p>
             </li>
           ))}
         </ul>
       </Frame>
 
-      <Frame id="how" className="py-20 md:py-24">
-        <Chapter index="03" label="How it works" title="Four tools." tail="One read-only path." />
-        <div className="grid gap-4 lg:grid-cols-[5fr_7fr]">
-          <ol className="divide-y divide-line border border-line">
-            {STEPS.map(([title, detail], i) => (
-              <li key={i} className="grid grid-cols-[2rem_1fr] p-5">
-                <span className="font-mono text-xs leading-6 text-fg-3">{String(i + 1).padStart(2, "0")}</span>
-                <div>
-                  <p className="leading-6 font-medium text-fg">{title}</p>
-                  <p className="mt-1 text-sm text-fg-2 [&_code]:font-mono [&_code]:text-[13px] [&_code]:text-fg">{detail}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <dl className="divide-y divide-line border border-line">
-            {TOOLS.map(([name, desc]) => (
-              <div key={name} className="grid gap-1 p-5 sm:grid-cols-[10rem_1fr] sm:gap-6">
-                <dt className="font-mono text-[13px] leading-6 text-fg">{name}</dt>
-                <dd className="leading-6 text-fg-2">{desc}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </Frame>
-
+      {/* 5. Why not psql */}
       <Frame id="compare" className="py-20 md:py-24">
-        <Chapter index="04" label="Compare" title="QueryIO vs raw psql" tail="vs a generic database MCP." />
+        <Chapter eyebrow="Compare" title="Why not just give it psql?">
+          <p>Because psql was built for you, not for an agent working on its own.</p>
+        </Chapter>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <table className="w-full min-w-[720px] border-collapse border border-line text-left text-sm">
+          <table className="w-full min-w-[620px] border-collapse border border-line text-left text-sm">
             <thead>
               <tr className="border-b border-line">
-                <th className="w-[22%] p-4 font-normal">
-                  <span className="sr-only">Property</span>
+                <th className="w-[20%] p-4 font-normal">
+                  <span className="sr-only">Concern</span>
                 </th>
-                <th className={`p-4 font-normal ${label}`}>Raw psql</th>
-                <th className={`p-4 font-normal ${label}`}>Generic Postgres MCP</th>
-                <th className="bg-surface p-4 font-mono text-xs font-medium tracking-[0.06em] text-fg uppercase">QueryIO</th>
+                <th className={`p-4 font-normal ${label}`}>Agent + DATABASE_URL</th>
+                <th className="bg-surface-2 p-4 font-mono text-xs font-medium tracking-[0.06em] text-fg uppercase">
+                  Agent + QueryIO
+                </th>
               </tr>
             </thead>
             <tbody>
-              {COMPARE.map(([k, a, b, q]) => (
-                <tr key={k} className="border-b border-line last:border-b-0">
+              {COMPARE.map(([concern, raw, q]) => (
+                <tr key={concern} className="border-b border-line last:border-b-0">
                   <th scope="row" className="p-4 font-normal text-fg-3">
-                    {k}
+                    {concern}
                   </th>
-                  <td className="p-4 text-fg-2">{a}</td>
-                  <td className="p-4 text-fg-2">{b}</td>
-                  <td className="bg-surface p-4 text-fg">{q}</td>
+                  <td className="p-4 text-fg-2">{raw}</td>
+                  <td className="bg-surface-2 p-4 font-medium text-fg">{q}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="mt-4 font-mono text-xs text-fg-3">Generic MCP behavior varies by server.</p>
+        <p className="mt-4 max-w-[48rem] text-sm leading-relaxed text-fg-3">
+          Many database MCP servers mainly pass SQL through. QueryIO adds the controls and record lookups you would
+          otherwise build yourself. Limits are defaults and can be changed.
+        </p>
       </Frame>
 
-      <Frame id="benchmark" className="py-20 md:py-24">
-        <Chapter index="05" label="Benchmark" title="Measured honestly." tail="Including where it fell short." />
-        <dl className="grid border-t border-l border-line sm:grid-cols-3">
-          {STATS.map(([n, k, foot]) => (
-            <div key={k} className="flex flex-col border-r border-b border-line p-7 md:p-8">
-              <dt className={`order-2 mt-5 ${label}`}>{k}</dt>
-              <dd className="order-1 text-[44px] leading-none font-medium tracking-[-0.03em] tabular-nums md:text-5xl">{n}</dd>
-              <dd className="order-3 mt-1.5 text-sm text-fg-2">{foot}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-4 rounded-md border border-line bg-surface p-6 md:p-8">
-          <p className={label}>Win condition not met</p>
-          <p className="mt-3 max-w-[60rem] leading-relaxed text-fg-2">
-            We pre-declared ~30% fewer interactions or bytes on forensic tasks. <span className="text-fg">Median bytes
-            cleared it.</span> Mean interactions (−16.8%) and mean bytes (−20.7%) did not, and aggregate tasks regressed
-            on mean bytes (+27.9%). The QueryIO arm ran through a CLI shim, not the MCP transport, and logged 23 failed
-            commands from shell quoting.
-          </p>
-          <p className="mt-5 font-mono text-xs leading-relaxed text-fg-3">
-            25 runs · 3 arms: raw psql, QueryIO, DBHub reference · 5 tasks · seeded SaaS database · same agent model
-          </p>
-          <a
-            href={LINKS.benchmark}
-            className="mt-5 inline-flex items-center gap-1 text-sm text-fg underline decoration-line-strong underline-offset-4 transition-colors hover:decoration-fg"
-          >
-            Read BENCHMARK.md <ArrowUpRight size={14} aria-hidden />
-          </a>
-        </div>
-      </Frame>
-
-      <Frame id="security" className="py-20 md:py-24">
-        <Chapter index="06" label="Security" title="What QueryIO enforces." tail="And what it doesn’t." />
+      {/* 6. Trust */}
+      <Frame id="trust" className="py-20 md:py-24">
+        <Chapter eyebrow="Guarantees" title="What QueryIO guarantees." tail="And what it doesn’t." />
         <div className="grid border border-line md:grid-cols-2 md:divide-x md:divide-line">
           <div className="p-7 md:p-8">
             <p className={`flex items-center gap-2 ${label}`}>
-              <ShieldCheck size={14} aria-hidden /> Enforced
+              <ShieldCheck size={14} aria-hidden /> Guaranteed, with a non-superuser role
             </p>
             <ul className="mt-5 space-y-3">
-              {ENFORCED.map((e) => (
+              {GUARANTEED.map((e) => (
                 <li key={e} className="flex gap-3 leading-6 text-fg">
                   <Check size={15} aria-hidden className="mt-[5px] shrink-0 text-fg-2" />
                   {e}
@@ -520,57 +388,72 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        <div className="mt-4 overflow-hidden rounded-md border border-line bg-surface">
-          <p className="flex h-10 items-center border-b border-line px-5 font-mono text-xs text-fg-2">
-            Recommended: a dedicated read-only role
-          </p>
-          <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-[1.7] text-fg">{ROLE_SQL}</pre>
-        </div>
+        <p className="mt-4 rounded-md border border-line bg-surface p-5 leading-relaxed text-fg-2 md:p-6">
+          <span className="text-fg">Connect with a dedicated read-only role.</span>{" "}
+          <code className={codeCls}>npx -y queryio check</code> inspects the role you’re using and prints the SQL to
+          create one.
+        </p>
       </Frame>
 
-      <Frame id="setup" className="py-20 md:py-24">
-        <Chapter index="07" label="Setup" title="Running in" tail="under two minutes." />
-        <div className="grid gap-4 lg:grid-cols-[7fr_5fr]">
-          <SetupConfig />
-          <div className="lg:pt-11">
-            <dl className="divide-y divide-line border border-line">
-              <div className={`px-4 py-3 ${label}`}>Defaults · env vars only</div>
-              {DEFAULTS.map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between gap-4 px-4 py-3 font-mono text-xs">
-                  <dt className="min-w-0 truncate text-fg-2">{k}</dt>
-                  <dd className="shrink-0 text-fg">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      </Frame>
-
-      <Frame id="faq" className="py-20 md:py-24">
-        <Chapter index="08" label="FAQ" title="Questions," tail="answered plainly." />
-        <div className="divide-y divide-line border border-line">
-          {FAQ.map(([q, a], i) => (
-            <details key={q} open={i === 0} className="group">
-              <summary className="flex cursor-pointer items-center justify-between gap-6 px-5 py-5 text-base text-fg transition-colors hover:bg-surface md:px-6">
-                {q}
-                <Plus size={16} aria-hidden className="shrink-0 text-fg-3 group-open:hidden" />
-                <Minus size={16} aria-hidden className="hidden shrink-0 text-fg-3 group-open:block" />
-              </summary>
-              <p className="max-w-[48rem] px-5 pb-6 leading-relaxed text-fg-2 md:px-6">{a}</p>
-            </details>
+      {/* 7. Benchmark */}
+      <Frame id="benchmark" tone="muted" className="py-20 md:py-24">
+        <Chapter eyebrow="Benchmark" title="On investigation tasks," tail="same answers with less to read.">
+          <p>25 agent runs on a seeded SaaS database: raw psql against QueryIO, with DBHub as a reference.</p>
+        </Chapter>
+        <dl className="grid border-t border-l border-line bg-bg sm:grid-cols-3">
+          {STATS.map(([n, name, foot]) => (
+            <div key={name} className="flex flex-col border-r border-b border-line p-7 md:p-8">
+              <dt className={`order-2 mt-5 ${label}`}>{name}</dt>
+              <dd className="order-1 text-[44px] leading-none font-medium tracking-[-0.03em] tabular-nums md:text-5xl">{n}</dd>
+              <dd className="order-3 mt-1.5 text-sm text-fg-2">{foot}</dd>
+            </div>
           ))}
-        </div>
+        </dl>
+        <p className="mt-6 max-w-[56rem] leading-relaxed text-fg-2">
+          <span className="text-fg">The pre-declared win condition was not met.</span> Median output cleared the ~30%
+          target. Mean interactions (−16.8%) and mean bytes (−20.7%) did not, and counting tasks used more output on
+          average. The QueryIO runs went through a command-line wrapper, not MCP.
+        </p>
+        <a href={LINKS.benchmark} className={`mt-5 ${textLink}`}>
+          Methodology and full results <ArrowUpRight size={14} aria-hidden />
+        </a>
       </Frame>
 
-      <Frame className="py-24 text-center md:py-28">
-        <p className={label}>[ 09 / 09 ]</p>
-        <h2 className="mx-auto mt-5 max-w-[46rem] text-[32px] leading-[1.08] font-medium tracking-[-0.03em] md:text-[44px]">
+      {/* 8. Get started */}
+      <Frame id="setup" className="py-20 md:py-24">
+        <Chapter eyebrow="Get started" title="Running in" tail="about two minutes." />
+        <ol className="grid gap-10 lg:grid-cols-[5fr_7fr] lg:gap-x-8">
+          <li>
+            <Step n="01" title="Check your connection.">
+              Set <code className={codeCls}>QUERYIO_DATABASE_URL</code>, then run the preflight. It reports your
+              role’s privileges and warns about risky ones.
+            </Step>
+            <CommandBar lines={["npx -y queryio check"]} copy="npx -y queryio check" />
+          </li>
+          <li className="min-w-0 lg:row-span-2">
+            <Step n="02" title="Add QueryIO to your coding agent." />
+            <SetupConfig />
+          </li>
+          <li>
+            <Step n="03" title="Ask about your data.">
+              “Why is this customer still on the free plan?”
+            </Step>
+          </li>
+        </ol>
+        <p className="mt-8 text-sm text-fg-3">
+          PostgreSQL · Any MCP client that runs local stdio servers · MIT ·{" "}
+          <a href={LINKS.config} className={textLink}>
+            Configuration in the README
+          </a>
+        </p>
+      </Frame>
+
+      {/* 9. Final CTA */}
+      <Frame tone="muted" className="py-24 text-center md:py-32">
+        <h2 className="mx-auto max-w-[46rem] text-[32px] leading-[1.08] font-medium tracking-[-0.03em] md:text-[44px]">
           Let your agent read the database. <span className="text-fg-2">Not own it.</span>
         </h2>
-        <div className="mx-auto mt-10 max-w-[420px] text-left">
-          <CommandBar lines={["npx -y queryio check"]} copy="npx -y queryio check" />
-        </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
           <a href="#setup" className={btnPrimary}>
             Get started
           </a>
@@ -581,7 +464,7 @@ export default function Home() {
       </Frame>
 
       <footer>
-        <div className="mx-auto grid max-w-[1120px] gap-10 px-4 py-14 sm:border-x sm:border-line sm:px-6 md:grid-cols-[2fr_1fr_1fr_1fr]">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-14 sm:px-8 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <p className="flex items-center gap-2.5 text-[15px] font-semibold">
               <span className="rounded-[4px] border border-line-strong px-1.5 py-0.5 font-mono text-[11px] font-normal text-fg-2">
@@ -589,9 +472,7 @@ export default function Home() {
               </span>
               QueryIO
             </p>
-            <p className="mt-3 max-w-[18rem] text-sm leading-relaxed text-fg-2">
-              Bounded, read-oriented PostgreSQL investigation for coding agents.
-            </p>
+            <p className="mt-3 max-w-[18rem] text-sm leading-relaxed text-fg-2">Database access for coding agents.</p>
           </div>
           {FOOTER.map(([title, items]) => (
             <nav key={title} aria-label={title}>
@@ -609,9 +490,7 @@ export default function Home() {
           ))}
         </div>
         <div className="border-t border-line">
-          <p className="mx-auto max-w-[1120px] px-4 py-6 font-mono text-xs text-fg-3 sm:border-x sm:border-line sm:px-6">
-            © 2026 QueryIO · MIT License
-          </p>
+          <p className="mx-auto max-w-[1240px] px-5 py-6 font-mono text-xs text-fg-3 sm:px-8">© 2026 QueryIO · MIT License</p>
         </div>
       </footer>
     </main>
