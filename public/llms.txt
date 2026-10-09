@@ -1,0 +1,37 @@
+# QueryIO
+
+> Open-source PostgreSQL MCP server for investigating application bugs with AI coding agents.
+
+QueryIO connects Claude Code, Codex, and Cursor to PostgreSQL over local MCP stdio. Start with a failing record, inspect related evidence, and verify a diagnosis with targeted SQL. The agent supplies the application-code context and business rules. PostgreSQL is the only supported database. MIT licensed.
+
+## Setup and verification
+
+- Requires Node.js 20+, an existing PostgreSQL database, and network access to it.
+- Run `npx -y queryio setup` from your application repository. The interactive wizard configures one or more supported agents with project or global scope, previews changes, and asks before writing or replacing entries.
+- QueryIO 0.2.1 adds `npx -y queryio setup --claude`, `npx -y queryio setup --codex`, and `npx -y queryio setup --cursor` to preselect an agent. These flags keep the interactive wizard and its checks and confirmations.
+- Set `QUERYIO_DATABASE_URL` in the environment that starts your agent. QueryIO does not load `.env` files. The wizard does not request or store the connection string, securely manage credentials, or provision PostgreSQL. This website never collects database credentials.
+- With the variable set, setup checks connectivity and role privileges and verifies that the MCP server lists its tools. Missing or invalid credentials leave setup incomplete. Recheck with `npx -y queryio check`.
+- Restart your agent from that environment. Use `/mcp` in Claude Code or Codex; in Cursor, confirm queryio is enabled in Settings > MCP. Desktop applications may not inherit terminal variables.
+
+## MCP tools
+
+- `inspect_row`: Fetch a record by its full declared primary key and bounded samples of immediate declared foreign-key relationships in both directions, in one call. One level deep; defaults are 5 rows per relation and 25 relations. Check `has_more` and skipped or failed relations. Samples are not ordered by recency.
+- `query`: Run one read-oriented SELECT, WITH, VALUES, TABLE, or SHOW statement, including joins and aggregates. Defaults: 100 returned rows and a 32 KiB query result budget. EXPLAIN and direct writes are rejected.
+- `list_tables`: Find tables by table or column name substring, with estimated row counts and column counts.
+- `describe_tables`: Describe multiple tables' columns, keys, indexes, and available planner statistics.
+
+## Security and limitations
+
+Investigation tools use READ ONLY transactions and roll back. Defaults include a 5-second statement timeout and a 1-second lock timeout, value truncation, best-effort exact-column-name redaction, and local audit metadata logging. The query byte budget is not a universal limit for all tools.
+
+Use a dedicated PostgreSQL role with narrow read permissions. QueryIO warns about privileged roles but permits them. It is not a sandbox: aliases and expressions can bypass redaction; permitted functions can have side effects; agents with shell access can bypass QueryIO. Returned records enter the agent's context under that client's data handling policies. QueryIO does not apply fixes or infer undeclared relationships; use targeted SQL to confirm missing data.
+
+## Official sources
+
+- [Website](https://queryiomcp.vercel.app/): Product explanation, setup command, and demo.
+- [Setup reference](https://queryiomcp.vercel.app/install): Environment, scope, verification, and troubleshooting.
+- [GitHub and README](https://github.com/aradhyas8/queryio-mcp): Source and quick start.
+- [Tool and configuration reference](https://github.com/aradhyas8/queryio-mcp/blob/main/docs/reference.md): Contracts, defaults, and client setup.
+- [Manual configuration](https://github.com/aradhyas8/queryio-mcp/blob/main/README.md#manual-configuration): Client configuration without the wizard.
+- [Security documentation](https://github.com/aradhyas8/queryio-mcp/blob/main/docs/security.md): Permissions and resource limits.
+- [npm package](https://www.npmjs.com/package/queryio): Published package.

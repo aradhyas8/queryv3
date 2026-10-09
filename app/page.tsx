@@ -1,28 +1,30 @@
 import type { ReactNode } from "react";
-import { Check } from "lucide-react";
-import { ClientConfig, CopyButton, InlineCommand, Terminal, ViewportVideo } from "./interactive";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight, Check } from "lucide-react";
+import { Terminal } from "./interactive";
+import { AgentPicker } from "./agent-picker";
+import { SECURITY_DOCS, SETUP_COMMAND, SiteFooter, SiteNav } from "./site";
+import { SITE_DESCRIPTION, SITE_URL } from "./seo";
 
-const NPM = "https://www.npmjs.com/package/queryio";
-const VERSION = "0.1.0";
-const DSN = "postgres://user:password@localhost:5432/my_database";
-const RUN = "npm i queryio";
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+const software = {
+  "@context": "https://schema.org",
+  "@type": ["SoftwareApplication", "SoftwareSourceCode"],
+  "@id": `${SITE_URL}/#software`,
+  name: "QueryIO",
+  description: SITE_DESCRIPTION,
+  url: SITE_URL,
+  codeRepository: "https://github.com/aradhyas8/queryio-mcp",
+  license: "https://github.com/aradhyas8/queryio-mcp/blob/main/LICENSE",
+  applicationCategory: "DeveloperApplication",
+  runtimePlatform: "Node.js 20+",
+  featureList: ["PostgreSQL database investigation over MCP", "Bounded inspection of records and declared foreign-key relationships", "Read-oriented SQL and schema inspection"],
+  sameAs: ["https://github.com/aradhyas8/queryio-mcp", "https://www.npmjs.com/package/queryio"],
+};
 
 /* ---------- primitives ---------- */
-
-/** The [q] mark; same paths as public/queryio-logo.svg, filled with the current text color. */
-function Logo({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 611 448" fill="currentColor" aria-hidden className={`w-auto shrink-0 ${className}`}>
-      <path d="M0 0H136V51H60V397H136V448H0Z" />
-      <path d="M611 0H475V51H550V397H475V448H611Z" />
-      <path
-        fillRule="evenodd"
-        d="M289 87a137 137 0 1 0 0 274a137 137 0 1 0 0-274ZM292 146a78 78 0 1 1 0 156a78 78 0 1 1 0-156Z"
-      />
-      <path d="M372 91H438V448H372Z" />
-    </svg>
-  );
-}
 
 function Section({ id, children, className = "py-20" }: { id?: string; children: ReactNode; className?: string }) {
   return (
@@ -32,8 +34,8 @@ function Section({ id, children, className = "py-20" }: { id?: string; children:
   );
 }
 
-function SectionLabel({ children, className = "mb-12" }: { children: ReactNode; className?: string }) {
-  return <p className={`font-mono text-xs tracking-widest text-fg-6 uppercase ${className}`}>{children}</p>;
+function SectionLabel({ children, className = "mb-12", as: Tag = "h2" }: { children: ReactNode; className?: string; as?: "h2" | "p" }) {
+  return <Tag className={`font-mono text-xs font-normal tracking-widest text-fg-4 uppercase ${className}`}>{children}</Tag>;
 }
 
 function FeatureCard({ title, children }: { title: string; children: ReactNode }) {
@@ -48,112 +50,110 @@ function FeatureCard({ title, children }: { title: string; children: ReactNode }
 const pill = "rounded-md border px-2 py-0.5 font-mono text-xs";
 const ghostLink =
   "rounded-md border border-line px-3 py-1.5 font-mono text-xs text-fg-4 transition-colors duration-150 hover:border-fg-7 hover:text-ink";
-const mono = "font-mono text-[13px] text-fg";
 
 /* ---------- content ---------- */
 
 const STEPS: { n: string; title: string; window: string; copy?: string; code: ReactNode; body: string }[] = [
   {
     n: "01",
-    title: "Connect PostgreSQL",
-    window: "bash",
-    copy: `export QUERYIO_DATABASE_URL="${DSN}"\nnpx -y queryio check`,
+    title: "Set up QueryIO",
+    window: "terminal",
+    copy: SETUP_COMMAND,
     code: (
       <>
-        <span className="text-fg-5"># Set the connection</span>
-        {"\n"}export QUERYIO_DATABASE_URL=&quot;postgres://…&quot;
+        <span className="text-fg-4">$</span> {SETUP_COMMAND}
         {"\n\n"}
-        <span className="text-fg-5"># Check the role</span>
-        {"\n"}npx -y queryio check
+        <span className="text-fg-4"># Choose your agents</span>
+        {"\n"}<span className="text-fg-4"># Review and confirm</span>
       </>
     ),
-    body: "Connect QueryIO to PostgreSQL with controlled read-oriented access. The preflight prints SQL for a read-only role if you need one.",
+    body: "The wizard configures your selected coding agents, previews changes before writing, and checks PostgreSQL connectivity when QUERYIO_DATABASE_URL is set. Choose project or global scope.",
   },
   {
     n: "02",
-    title: "Start from the record",
+    title: "Inspect a record",
     window: "inspect_row",
     code: (
       <>
         {"{"}
         {"\n"}
-        {'  "table": "public.users",'}
+        {'  "table": "public.invoices",'}
         {"\n"}
-        {'  "key": { "id": 4821 }'}
+        {'  "key": { "id": 90017 }'}
         {"\n"}
         {"}"}
         {"\n\n"}
-        <span className="text-fg-5"># ← the row, plus rows</span>
+        <span className="text-fg-5"># ← paid invoice, linked</span>
         {"\n"}
-        <span className="text-fg-5">#   linked by foreign keys</span>
+        <span className="text-fg-5">#   org + subscription</span>
       </>
     ),
-    body: "QueryIO gives the agent the record and relevant linked rows instead of making it guess which table matters next.",
+    body: "inspect_row fetches a record by its full primary key and bounded samples of immediate declared foreign-key relationships, in both directions, in one MCP call.",
   },
   {
     n: "03",
-    title: "Dig deeper with SQL",
+    title: "Verify with targeted SQL",
     window: "query",
     code: (
       <>
-        SELECT count(*)
-        {"\n"}FROM users
-        {"\n"}WHERE email_verified_at IS NOT NULL
+        SELECT id, status, amount_cents
+        {"\n"}FROM public.invoices
+        {"\n"}WHERE org_id = 142
         {"\n"}
-        {"  "}AND activated_at IS NULL;
+        {"  "}AND period_start = &apos;2026-09-05&apos;;
         {"\n\n"}
         <span className="text-fg-5"># ← bounded, read-only</span>
       </>
     ),
-    body: "For questions across many records, the agent can use ordinary SQL through the same controlled interface.",
+    body: "The agent uses your code to interpret the records, then checks its diagnosis with read-oriented SQL. Here, a second invoice is still open for the same billing period.",
   },
 ];
 
 const COMPARE = [
   {
-    title: "Typical database MCP",
+    title: "Starting with SQL",
     badge: "SQL access",
-    intro: "The agent works out the path through the data one query at a time.",
+    intro: "The agent writes the lookups that connect a symptom to related records.",
     points: [
-      "The agent decides which tables to query.",
-      "Each result can lead to another query.",
-      "Anything it does not think to check can be missed.",
+      "Find the record behind the bug.",
+      "Look up its relationships in the schema.",
+      "Write joins or follow-up queries to gather related rows.",
     ],
-    flow: "think → SQL → result → think → SQL → result",
+    flow: "schema → SQL → records → follow-up SQL",
     dark: false,
   },
   {
     title: "QueryIO",
-    badge: "record context + SQL",
-    intro: "The agent starts with the record and what is connected to it.",
+    badge: "inspect_row + SQL",
+    intro: "Start with the failing record and related evidence in one MCP call.",
     points: [
-      "Start from a customer, user, job, order, project, or another record.",
-      "QueryIO exposes useful connected data first.",
-      "Then the agent uses SQL when deeper investigation is useful.",
+      "Inspect a user, invoice, or project by its primary key.",
+      "Get bounded samples of rows linked by declared foreign keys.",
+      "Use application code and targeted SQL to verify the diagnosis.",
     ],
-    flow: "record → record + linked rows → SQL if needed",
+    flow: "record → inspect_row → targeted SQL",
     dark: true,
   },
 ];
 
 const CAPABILITIES: [string, string][] = [
-  ["Inspect a record", "inspect_row fetches one row by its primary key, plus everything one foreign key away, in a single call."],
-  ["Follow linked rows", "Rows it references and rows referencing it, up to 5 per relation, with has_more when there are more."],
-  ["Run read-only SQL", "query runs one SELECT, WITH, VALUES, TABLE or SHOW statement per call. No chaining."],
+  ["Inspect a record", "inspect_row fetches one row by its full primary key and samples of rows one declared foreign key away, in one MCP call."],
+  ["Follow linked rows", "Incoming and outgoing relationships, up to 5 rows per relation and 25 relations by default. Check has_more and skipped or failed relations."],
+  ["Verify with SQL", "query accepts one read-oriented SELECT, WITH, VALUES, TABLE or SHOW statement per call, including joins and aggregates."],
   ["Understand the schema", "list_tables and describe_tables return columns, keys, indexes and planner stats without scanning tables."],
-  ["Bounded results", "SQL results stop at 100 rows or 32 KB. Values longer than 200 characters are cut with a size marker."],
-  ["Redact sensitive values", "Columns named like password, token or api_key come back as [redacted]."],
-  ["Read-only execution", "Every call runs in a READ ONLY transaction that is always rolled back."],
+  ["Bounded results", "query defaults to 100 returned rows and a 32 KiB result budget. Long values are shortened with a size marker."],
+  ["Redact sensitive values", "Exact column-name matches, such as password, token or api_key, return [redacted]. Aliases and expressions can bypass redaction."],
+  ["Read-only execution", "Investigation tools run in READ ONLY transactions and roll back afterward. Database permissions still determine what functions can do."],
   ["Server-side timeouts", "Postgres cancels statements after 5 seconds and lock waits after 1 second."],
-  ["Audit operations", "One JSON line per call records the tool, tables and sizes. Row values are never logged."],
+  ["Audit operations", "Local audit logging records tool metadata by default, without row values. Logging failures do not stop an investigation."],
 ];
 
 const LIMITS: [string, string][] = [
-  ["enforced", "Nothing the agent runs can commit a write, with a non-superuser role."],
+  ["enforced", "Investigation tools use READ ONLY transactions and reject direct data changes. Use a dedicated role with narrow read permissions."],
   ["enforced", "Credentials come only from QUERYIO_DATABASE_URL. Never from arguments or .env files."],
   ["not guaranteed", "QueryIO is not a sandbox. An agent with shell access can run psql on its own."],
   ["not guaranteed", "Redaction matches column names. A hand-written query can alias a column past it."],
-  ["not guaranteed", "A superuser role, dblink or foreign data wrappers break the read-only guarantee."],
+  ["not guaranteed", "Privileged roles, side-effecting functions, dblink or foreign data wrappers can affect data outside the read-only transaction."],
 ];
 
 const STATS = [
@@ -170,66 +170,71 @@ const NOT_SHOWN = [
   "The QueryIO runs used a command-line wrapper, not the MCP server.",
 ];
 
-const QUICKSTART: [string, string, ReactNode][] = [
-  ["Set QUERYIO_DATABASE_URL", `export QUERYIO_DATABASE_URL="${DSN}"`, null],
-  ["Check the connection", "npx -y queryio check", null],
-  [
-    "Add it to Claude Code",
-    `claude mcp add queryio -e QUERYIO_DATABASE_URL="${DSN}" -- npx -y queryio`,
-    null,
-  ],
-  ["Ask a database-backed question", "", <span key="q" className="text-sm text-fg-4">“Why is this customer still on the Free plan?”</span>],
-];
-
 /* ---------- page ---------- */
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-bg">
-      <nav className="border-b border-line">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <a href="#top" className="flex items-center gap-2.5 font-mono text-sm font-medium text-ink">
-            <Logo className="h-3.5" />
-            queryio
-          </a>
-          <a href={NPM} className={ghostLink}>
-            npm i queryio
-          </a>
-        </div>
-      </nav>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(software).replace(/</g, "\\u003c") }} />
+      <SiteNav />
 
       {/* Hero */}
-      <Section id="top" className="pt-24 pb-20">
+      <Section id="top" className="pt-10 pb-12 sm:pt-12 sm:pb-14">
+        <div id="content" tabIndex={-1} />
         <p className="font-mono text-xs tracking-widest text-fg-6 uppercase">
-          PostgreSQL MCP <span className="px-2">·</span> for your AI agents
+          Database debugging <span className="px-2">·</span> MCP server
         </p>
-        <h1 className="mt-8 max-w-2xl text-4xl leading-[1.05] font-bold tracking-tight text-ink sm:text-5xl">
-          Database context for your AI agents.
+        <h1 className="mt-5 max-w-2xl text-4xl leading-[1.05] font-bold tracking-tight text-ink sm:text-5xl">
+          Debug database issues with your AI coding agent.
         </h1>
-        <p className="mt-6 max-w-xl text-lg leading-relaxed text-fg-2">
-          Your AI agent knows your code. QueryIO lets it inspect the real PostgreSQL records behind it — including
-          the rows connected to them — and use SQL when it needs to go deeper.
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-fg-2">
+          QueryIO is an open-source PostgreSQL MCP server that helps coding agents investigate application bugs with database evidence: inspect a record,
+          see related rows, and verify a diagnosis with bounded, read-oriented SQL.
         </p>
-        <div className="mt-10 flex max-w-md flex-col gap-3 sm:flex-row">
-          <InlineCommand cmd={RUN} className="flex-1" />
-        </div>
-        <p className="mt-6 font-mono text-xs text-fg-5">Read-only · bounded · redacted · audited</p>
+        <p className="mt-3 text-sm text-fg-3">Currently supports PostgreSQL only.</p>
+        <AgentPicker />
+        <p className="mt-5 max-w-3xl text-[13px] leading-relaxed text-fg-3">
+          Set <code className="font-mono text-fg">QUERYIO_DATABASE_URL</code> in the environment that starts your agent. The wizard configures one or more agents with project or global scope and previews changes before writing. It does not store credentials or provision PostgreSQL.{" "}
+          <Link href="/install" className="inline-block underline decoration-fg-7 underline-offset-4 hover:text-ink">Setup details</Link>
+          {" · "}<Link href="/install#connection" className="inline-block underline decoration-fg-7 underline-offset-4 hover:text-ink">Verify your connection</Link>
+        </p>
+        <p className="mt-4 font-mono text-xs text-fg-4">Read-only · bounded · redacted · audited</p>
       </Section>
 
       {/* Demo */}
       <Section id="demo">
-        <SectionLabel className="mb-4">See it work</SectionLabel>
-        <p className="mb-10 max-w-md text-sm leading-relaxed text-fg-4">
-          Start from a real record. See the context around it before the agent decides what to query next.
+        <SectionLabel as="p" className="mb-4">See it work</SectionLabel>
+        <h2 id="demo-title" className="max-w-2xl text-2xl leading-tight font-semibold tracking-tight text-ink sm:text-3xl">
+          Paid invoice. Suspended workspace. Why?
+        </h2>
+        <p id="demo-description" className="mt-4 mb-8 max-w-xl text-sm leading-relaxed text-fg-4">
+          Follow an agent from the billing code to a paid invoice and its linked records, then through a SQL
+          check that reveals the duplicate invoice keeping the workspace suspended.
         </p>
-        <ViewportVideo
+        <video
           src="/queryio-film-web.mp4"
           poster="/queryio-film-poster.png"
           controls
+          playsInline
+          preload="metadata"
+          aria-labelledby="demo-title"
+          aria-describedby="demo-description demo-note"
           className="w-full rounded-xl border border-line bg-cmd shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_24px_64px_-12px_rgb(0_0_0/0.12)]"
         >
-          QueryIO demo video.
-        </ViewportVideo>
+          <a href="/queryio-film-web.mp4">Watch the QueryIO debugging walkthrough.</a>
+        </video>
+        <p id="demo-note" className="mt-4 text-[13px] leading-relaxed text-fg-4">
+          32-second illustrated walkthrough · PostgreSQL · No audio. Use fullscreen for small text.
+        </p>
+        <details className="mt-4 text-sm leading-relaxed text-fg-4">
+          <summary className="w-fit cursor-pointer text-fg-3">Read the demo walkthrough</summary>
+          <ol className="mt-3 max-w-2xl list-decimal space-y-2 pl-5">
+            <li>The agent reads the billing code: any open invoice more than 14 days past due keeps a workspace suspended.</li>
+            <li>inspect_row returns paid invoice 90017, its suspended organization, and its past-due subscription.</li>
+            <li>A targeted SQL query finds invoice 90018 for the same period and $49 amount, still open and 23 days overdue.</li>
+            <li>The agent diagnoses the duplicate invoice as the blocker and recommends voiding it and reactivating the workspace. QueryIO does not apply the fix.</li>
+          </ol>
+        </details>
       </Section>
 
       {/* How it works */}
@@ -242,9 +247,9 @@ export default function Home() {
                 <span className="font-mono text-xs text-fg-7">{s.n}</span>
                 <div className="h-px flex-1 bg-line" />
               </div>
-              <h2 className="text-sm font-medium text-fg-3">{s.title}</h2>
+              <h3 className="text-sm font-medium text-fg-3">{s.title}</h3>
               <Terminal title={s.window} copy={s.copy}>
-                <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-fg">{s.code}</pre>
+                <pre className="min-h-64 p-5 font-mono text-xs leading-6 whitespace-pre-wrap break-words text-fg lg:min-h-56">{s.code}</pre>
               </Terminal>
               <p className="text-[13px] leading-relaxed text-fg-4">{s.body}</p>
             </li>
@@ -293,8 +298,9 @@ export default function Home() {
           ))}
         </div>
         <p className="mt-4 text-[13px] leading-relaxed text-fg-5">
-          Database MCPs differ, and many offer read-only SQL, schema tools and safety controls. QueryIO runs SQL too; the
-          difference is where the agent starts. Linked rows are rows one declared foreign key away.
+          Both workflows use SQL. QueryIO adds the initial relationship lookups through inspect_row, so the agent can
+          compare state across tables before choosing its next query. Samples are not exhaustive or ordered by recency;
+          use SQL to confirm missing data or investigate relationships without declared foreign keys.
         </p>
       </Section>
 
@@ -323,50 +329,8 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-[13px] text-fg-5">All limits are defaults you can change.</p>
-      </Section>
-
-      {/* Quick start */}
-      <Section id="setup">
-        <SectionLabel>Quick start</SectionLabel>
-        <ol className="overflow-hidden rounded-xl border border-line">
-          <li className="flex gap-8 border-b border-line bg-row-hover px-5 py-3 font-mono text-xs text-fg-5" aria-hidden>
-            <span className="sm:w-72">step</span>
-            <span className="max-sm:hidden">command</span>
-          </li>
-          {QUICKSTART.map(([step, cmd, alt], i) => (
-            <li
-              key={step}
-              className="flex flex-col gap-2 border-b border-line-soft bg-card px-5 py-3.5 transition-colors duration-100 last:border-b-0 hover:bg-row-hover sm:flex-row sm:items-center sm:gap-8"
-            >
-              <span className="flex shrink-0 gap-3 text-sm text-fg-4 sm:w-72">
-                <span className="font-mono text-xs leading-5 text-fg-7">0{i + 1}</span>
-                {step}
-              </span>
-              {alt ?? (
-                <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
-                  <code className="min-w-0 font-mono text-sm leading-6 break-all text-fg">{cmd}</code>
-                  <CopyButton text={cmd} />
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-[1fr_2fr]">
-          <div>
-            <h2 className="text-sm font-medium text-fg-3">Using Codex or another MCP client?</h2>
-            <p className="mt-3 text-[13px] leading-relaxed text-fg-4">
-              Add the same server to the client&apos;s config file. QueryIO runs as a local stdio server through{" "}
-              <code className={mono}>npx</code>, so there is no install step.
-            </p>
-          </div>
-          <ClientConfig />
-        </div>
-        <p className="mt-10 font-mono text-xs leading-relaxed text-fg-5">
-          Node 20+ · PostgreSQL · any MCP client that runs local stdio servers ·{" "}
-          <a href={NPM} className="underline decoration-fg-7 underline-offset-4 transition-colors hover:text-ink">
-            configuration options on npm
-          </a>
+        <p className="mt-4 text-[13px] leading-relaxed text-fg-4">
+          Numeric budgets and timeouts are configurable. Returned records enter your agent’s context. Read the <a href={SECURITY_DOCS} className="text-fg underline decoration-fg-7 underline-offset-4 hover:text-ink">security guidance and resource limits</a> before connecting sensitive data.
         </p>
       </Section>
 
@@ -407,31 +371,20 @@ export default function Home() {
       {/* Final CTA */}
       <Section>
         <div className="flex flex-col items-center gap-6 rounded-2xl border border-line bg-cmd px-6 py-14 text-center">
-          <SectionLabel className="">Get started</SectionLabel>
+          <SectionLabel as="p" className="">Get started</SectionLabel>
           <h2 className="max-w-md text-3xl leading-tight font-bold tracking-tight text-fg">
-            Give your AI agent the database context it is missing.
+            Investigate the record behind the bug.
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-fg-4">
-            Connect PostgreSQL and start investigating real records from your AI agent.
+            Connect PostgreSQL, give your coding agent a record ID and a symptom, and start investigating.
           </p>
-          <div className="flex w-full max-w-md flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <InlineCommand cmd={RUN} className="flex-1 bg-bg" />
-            <a href={NPM} className={`${ghostLink} flex h-11 items-center justify-center`}>
-              View on npm
-            </a>
-          </div>
+          <a href="#setup" className={`${ghostLink} flex h-11 items-center justify-center gap-2`}>
+            Set up QueryIO <ArrowRight size={14} aria-hidden />
+          </a>
         </div>
       </Section>
 
-      <footer className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-12">
-        <span className="flex items-center gap-2.5 font-mono text-xs text-fg-5">
-          <Logo className="h-3.5 text-ink" />
-          queryio v{VERSION}
-        </span>
-        <a href={NPM} className="font-mono text-xs text-fg-5 transition-colors duration-150 hover:text-ink">
-          npm
-        </a>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
